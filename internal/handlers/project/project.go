@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dionis-the-shark/apms-task-tracker/internal/models/project"
-	projectservice "github.com/dionis-the-shark/apms-task-tracker/internal/service/project"
+	projectusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/project/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc *projectservice.Service) http.HandlerFunc {
+func Create(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var p project.Project
-		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		var input projectusecase.CreateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Create(&p); err != nil {
+		p, err := svc.Create(input)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -30,7 +30,7 @@ func Create(svc *projectservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByID(svc *projectservice.Service) http.HandlerFunc {
+func GetByID(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
@@ -53,7 +53,7 @@ func GetByID(svc *projectservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetAll(svc *projectservice.Service) http.HandlerFunc {
+func GetAll(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		projects, err := svc.GetAll()
 		if err != nil {
@@ -66,7 +66,7 @@ func GetAll(svc *projectservice.Service) http.HandlerFunc {
 	}
 }
 
-func Update(svc *projectservice.Service) http.HandlerFunc {
+func Update(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
@@ -74,14 +74,14 @@ func Update(svc *projectservice.Service) http.HandlerFunc {
 			return
 		}
 
-		var p project.Project
-		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		var input projectusecase.UpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		p.ProjectID = projectID
 
-		if err := svc.Update(p); err != nil {
+		p, err := svc.Update(projectID, input)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return
@@ -95,7 +95,7 @@ func Update(svc *projectservice.Service) http.HandlerFunc {
 	}
 }
 
-func Delete(svc *projectservice.Service) http.HandlerFunc {
+func Delete(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {

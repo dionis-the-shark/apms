@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dionis-the-shark/apms-task-tracker/internal/models/user"
-	userservice "github.com/dionis-the-shark/apms-task-tracker/internal/service/user"
+	userusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/user/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc *userservice.Service) http.HandlerFunc {
+func Create(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var u user.User
-		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		var input userusecase.CreateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Create(&u); err != nil {
+		u, err := svc.Create(input)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -30,7 +30,7 @@ func Create(svc *userservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByID(svc *userservice.Service) http.HandlerFunc {
+func GetByID(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(chi.URLParam(r, "user_id"))
 		if err != nil {
@@ -53,7 +53,7 @@ func GetByID(svc *userservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetAll(svc *userservice.Service) http.HandlerFunc {
+func GetAll(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		users, err := svc.GetAll()
 		if err != nil {
@@ -66,7 +66,7 @@ func GetAll(svc *userservice.Service) http.HandlerFunc {
 	}
 }
 
-func Update(svc *userservice.Service) http.HandlerFunc {
+func Update(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(chi.URLParam(r, "user_id"))
 		if err != nil {
@@ -74,14 +74,14 @@ func Update(svc *userservice.Service) http.HandlerFunc {
 			return
 		}
 
-		var u user.User
-		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+		var input userusecase.UpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		u.UserID = userID
 
-		if err := svc.Update(u); err != nil {
+		u, err := svc.Update(userID, input)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return
@@ -95,7 +95,7 @@ func Update(svc *userservice.Service) http.HandlerFunc {
 	}
 }
 
-func Delete(svc *userservice.Service) http.HandlerFunc {
+func Delete(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(chi.URLParam(r, "user_id"))
 		if err != nil {

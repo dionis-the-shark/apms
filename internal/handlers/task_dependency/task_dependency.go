@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dionis-the-shark/apms-task-tracker/internal/models/taskdependency"
-	taskdependencyservice "github.com/dionis-the-shark/apms-task-tracker/internal/service/task_dependency"
+	taskdependencyusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task_dependency/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc *taskdependencyservice.Service) http.HandlerFunc {
+func Create(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var td taskdependency.TaskDependency
-		if err := json.NewDecoder(r.Body).Decode(&td); err != nil {
+		var input taskdependencyusecase.CreateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Create(td); err != nil {
+		td, err := svc.Create(input)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -30,7 +30,7 @@ func Create(svc *taskdependencyservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByIDs(svc *taskdependencyservice.Service) http.HandlerFunc {
+func GetByIDs(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		blockedTaskID, err := uuid.Parse(chi.URLParam(r, "blocked_task_id"))
 		if err != nil {
@@ -58,7 +58,7 @@ func GetByIDs(svc *taskdependencyservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetAll(svc *taskdependencyservice.Service) http.HandlerFunc {
+func GetAll(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		deps, err := svc.GetAll()
 		if err != nil {
@@ -71,7 +71,7 @@ func GetAll(svc *taskdependencyservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByBlockedTask(svc *taskdependencyservice.Service) http.HandlerFunc {
+func GetByBlockedTask(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		blockedTaskID, err := uuid.Parse(chi.URLParam(r, "blocked_task_id"))
 		if err != nil {
@@ -90,7 +90,7 @@ func GetByBlockedTask(svc *taskdependencyservice.Service) http.HandlerFunc {
 	}
 }
 
-func Update(svc *taskdependencyservice.Service) http.HandlerFunc {
+func Update(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		oldBlockedTaskID, err := uuid.Parse(chi.URLParam(r, "blocked_task_id"))
 		if err != nil {
@@ -103,13 +103,14 @@ func Update(svc *taskdependencyservice.Service) http.HandlerFunc {
 			return
 		}
 
-		var td taskdependency.TaskDependency
-		if err := json.NewDecoder(r.Body).Decode(&td); err != nil {
+		var input taskdependencyusecase.UpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Update(oldBlockedTaskID, oldDependentOnID, td.BlockedTaskID, td.DependentOnID); err != nil {
+		td, err := svc.Update(oldBlockedTaskID, oldDependentOnID, input)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return
@@ -123,7 +124,7 @@ func Update(svc *taskdependencyservice.Service) http.HandlerFunc {
 	}
 }
 
-func Delete(svc *taskdependencyservice.Service) http.HandlerFunc {
+func Delete(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		blockedTaskID, err := uuid.Parse(chi.URLParam(r, "blocked_task_id"))
 		if err != nil {

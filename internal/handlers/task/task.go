@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dionis-the-shark/apms-task-tracker/internal/models/task"
-	taskservice "github.com/dionis-the-shark/apms-task-tracker/internal/service/task"
+	taskusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc *taskservice.Service) http.HandlerFunc {
+func Create(svc taskusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var t task.Task
-		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		var input taskusecase.CreateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Create(&t); err != nil {
+		t, err := svc.Create(input)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -30,7 +30,7 @@ func Create(svc *taskservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByID(svc *taskservice.Service) http.HandlerFunc {
+func GetByID(svc taskusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {
@@ -53,7 +53,7 @@ func GetByID(svc *taskservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByProject(svc *taskservice.Service) http.HandlerFunc {
+func GetByProject(svc taskusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
@@ -72,7 +72,7 @@ func GetByProject(svc *taskservice.Service) http.HandlerFunc {
 	}
 }
 
-func Update(svc *taskservice.Service) http.HandlerFunc {
+func Update(svc taskusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {
@@ -80,14 +80,14 @@ func Update(svc *taskservice.Service) http.HandlerFunc {
 			return
 		}
 
-		var t task.Task
-		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		var input taskusecase.UpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		t.TaskID = taskID
 
-		if err := svc.Update(t); err != nil {
+		t, err := svc.Update(taskID, input)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return
@@ -101,7 +101,7 @@ func Update(svc *taskservice.Service) http.HandlerFunc {
 	}
 }
 
-func Delete(svc *taskservice.Service) http.HandlerFunc {
+func Delete(svc taskusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {

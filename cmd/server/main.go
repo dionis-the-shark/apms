@@ -7,7 +7,7 @@ import (
 
 	apmsenv "github.com/dionis-the-shark/apms-env"
 	"github.com/dionis-the-shark/apms-task-tracker/internal/app"
-	internalhttp "github.com/dionis-the-shark/apms-task-tracker/internal/http"
+	internalhttp "github.com/dionis-the-shark/apms-task-tracker/internal/handlers"
 	"github.com/dionis-the-shark/apms-task-tracker/internal/storage/postgres"
 )
 

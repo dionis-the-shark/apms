@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dionis-the-shark/apms-task-tracker/internal/models/skill"
-	skillservice "github.com/dionis-the-shark/apms-task-tracker/internal/service/skill"
+	skillusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/skill/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc *skillservice.Service) http.HandlerFunc {
+func Create(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var sk skill.Skill
-		if err := json.NewDecoder(r.Body).Decode(&sk); err != nil {
+		var input skillusecase.CreateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		if err := svc.Create(&sk); err != nil {
+		sk, err := svc.Create(input)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -30,7 +30,7 @@ func Create(svc *skillservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetByID(svc *skillservice.Service) http.HandlerFunc {
+func GetByID(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		skillID, err := uuid.Parse(chi.URLParam(r, "skill_id"))
 		if err != nil {
@@ -53,7 +53,7 @@ func GetByID(svc *skillservice.Service) http.HandlerFunc {
 	}
 }
 
-func GetAll(svc *skillservice.Service) http.HandlerFunc {
+func GetAll(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		skills, err := svc.GetAll()
 		if err != nil {
@@ -66,7 +66,7 @@ func GetAll(svc *skillservice.Service) http.HandlerFunc {
 	}
 }
 
-func Update(svc *skillservice.Service) http.HandlerFunc {
+func Update(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		skillID, err := uuid.Parse(chi.URLParam(r, "skill_id"))
 		if err != nil {
@@ -74,14 +74,14 @@ func Update(svc *skillservice.Service) http.HandlerFunc {
 			return
 		}
 
-		var sk skill.Skill
-		if err := json.NewDecoder(r.Body).Decode(&sk); err != nil {
+		var input skillusecase.UpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		sk.SkillID = skillID
 
-		if err := svc.Update(sk); err != nil {
+		sk, err := svc.Update(skillID, input)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return
@@ -95,7 +95,7 @@ func Update(svc *skillservice.Service) http.HandlerFunc {
 	}
 }
 
-func Delete(svc *skillservice.Service) http.HandlerFunc {
+func Delete(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		skillID, err := uuid.Parse(chi.URLParam(r, "skill_id"))
 		if err != nil {
