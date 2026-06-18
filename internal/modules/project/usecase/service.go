@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"time"
 
 	projectmodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/project"
@@ -15,11 +16,11 @@ type Service struct {
 }
 
 type API interface {
-	Create(input CreateInput) (projectmodule.Project, error)
-	GetByID(projectID uuid.UUID) (projectmodule.Project, error)
-	GetAll() ([]projectmodule.Project, error)
-	Update(projectID uuid.UUID, input UpdateInput) (projectmodule.Project, error)
-	Delete(projectID uuid.UUID) error
+	Create(ctx context.Context, input CreateInput) (projectmodule.Project, error)
+	GetByID(ctx context.Context, projectID uuid.UUID) (projectmodule.Project, error)
+	GetAll(ctx context.Context) ([]projectmodule.Project, error)
+	Update(ctx context.Context, projectID uuid.UUID, input UpdateInput) (projectmodule.Project, error)
+	Delete(ctx context.Context, projectID uuid.UUID) error
 }
 
 type CreateInput struct {
@@ -42,7 +43,7 @@ func New(repo ports.Repository) *Service {
 	}
 }
 
-func (s *Service) Create(input CreateInput) (projectmodule.Project, error) {
+func (s *Service) Create(ctx context.Context, input CreateInput) (projectmodule.Project, error) {
 	p := projectmodule.Project{
 		ProjectID:   s.newUUID(),
 		Title:       input.Title,
@@ -50,33 +51,33 @@ func (s *Service) Create(input CreateInput) (projectmodule.Project, error) {
 		ManagerID:   input.ManagerID,
 		CreatedAt:   s.now(),
 	}
-	if err := s.repo.CreateProject(&p); err != nil {
+	if err := s.repo.CreateProject(ctx, &p); err != nil {
 		return projectmodule.Project{}, err
 	}
 	return p, nil
 }
 
-func (s *Service) GetByID(projectID uuid.UUID) (projectmodule.Project, error) {
-	return s.repo.GetProjectByID(projectID)
+func (s *Service) GetByID(ctx context.Context, projectID uuid.UUID) (projectmodule.Project, error) {
+	return s.repo.GetProjectByID(ctx, projectID)
 }
 
-func (s *Service) GetAll() ([]projectmodule.Project, error) {
-	return s.repo.GetProjects()
+func (s *Service) GetAll(ctx context.Context) ([]projectmodule.Project, error) {
+	return s.repo.GetProjects(ctx)
 }
 
-func (s *Service) Update(projectID uuid.UUID, input UpdateInput) (projectmodule.Project, error) {
+func (s *Service) Update(ctx context.Context, projectID uuid.UUID, input UpdateInput) (projectmodule.Project, error) {
 	p := projectmodule.Project{
 		ProjectID:   projectID,
 		Title:       input.Title,
 		Description: input.Description,
 		ManagerID:   input.ManagerID,
 	}
-	if err := s.repo.UpdateProject(p); err != nil {
+	if err := s.repo.UpdateProject(ctx, p); err != nil {
 		return projectmodule.Project{}, err
 	}
 	return p, nil
 }
 
-func (s *Service) Delete(projectID uuid.UUID) error {
-	return s.repo.DeleteProject(projectID)
+func (s *Service) Delete(ctx context.Context, projectID uuid.UUID) error {
+	return s.repo.DeleteProject(ctx, projectID)
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	developerskillmodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/developer_skill"
@@ -21,21 +22,21 @@ func scanDeveloperSkill(s developerSkillScanner) (developerskillmodule.Developer
 	return ds, err
 }
 
-func (r *Repository) CreateDeveloperSkill(ds developerskillmodule.DeveloperSkill) error {
+func (r *Repository) CreateDeveloperSkill(ctx context.Context, ds developerskillmodule.DeveloperSkill) error {
 	query := `INSERT INTO developer_skills (developer_id, skill_id)
 			  VALUES ($1, $2)`
-	_, err := r.DB.Exec(query, ds.DeveloperID, ds.SkillID)
+	_, err := r.DB.ExecContext(ctx, query, ds.DeveloperID, ds.SkillID)
 	return err
 }
 
-func (r *Repository) GetDeveloperSkill(developerID, skillID uuid.UUID) (developerskillmodule.DeveloperSkill, error) {
+func (r *Repository) GetDeveloperSkill(ctx context.Context, developerID, skillID uuid.UUID) (developerskillmodule.DeveloperSkill, error) {
 	query := `SELECT developer_id, skill_id FROM developer_skills
 			  WHERE developer_id = $1 AND skill_id = $2`
-	return scanDeveloperSkill(r.DB.QueryRow(query, developerID, skillID))
+	return scanDeveloperSkill(r.DB.QueryRowContext(ctx, query, developerID, skillID))
 }
 
-func (r *Repository) GetDeveloperSkills() ([]developerskillmodule.DeveloperSkill, error) {
-	rows, err := r.DB.Query(`SELECT developer_id, skill_id FROM developer_skills`)
+func (r *Repository) GetDeveloperSkills(ctx context.Context) ([]developerskillmodule.DeveloperSkill, error) {
+	rows, err := r.DB.QueryContext(ctx, `SELECT developer_id, skill_id FROM developer_skills`)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +56,8 @@ func (r *Repository) GetDeveloperSkills() ([]developerskillmodule.DeveloperSkill
 	return skills, nil
 }
 
-func (r *Repository) GetDeveloperSkillsByDeveloper(developerID uuid.UUID) ([]developerskillmodule.DeveloperSkill, error) {
-	rows, err := r.DB.Query(`SELECT developer_id, skill_id FROM developer_skills WHERE developer_id = $1`, developerID)
+func (r *Repository) GetDeveloperSkillsByDeveloper(ctx context.Context, developerID uuid.UUID) ([]developerskillmodule.DeveloperSkill, error) {
+	rows, err := r.DB.QueryContext(ctx, `SELECT developer_id, skill_id FROM developer_skills WHERE developer_id = $1`, developerID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +77,10 @@ func (r *Repository) GetDeveloperSkillsByDeveloper(developerID uuid.UUID) ([]dev
 	return skills, nil
 }
 
-func (r *Repository) UpdateDeveloperSkill(oldDeveloperID, oldSkillID, newDeveloperID, newSkillID uuid.UUID) error {
+func (r *Repository) UpdateDeveloperSkill(ctx context.Context, oldDeveloperID, oldSkillID, newDeveloperID, newSkillID uuid.UUID) error {
 	query := `UPDATE developer_skills SET developer_id = $1, skill_id = $2
 			  WHERE developer_id = $3 AND skill_id = $4`
-	result, err := r.DB.Exec(query, newDeveloperID, newSkillID, oldDeveloperID, oldSkillID)
+	result, err := r.DB.ExecContext(ctx, query, newDeveloperID, newSkillID, oldDeveloperID, oldSkillID)
 	if err != nil {
 		return err
 	}
@@ -93,8 +94,9 @@ func (r *Repository) UpdateDeveloperSkill(oldDeveloperID, oldSkillID, newDevelop
 	return nil
 }
 
-func (r *Repository) DeleteDeveloperSkill(developerID, skillID uuid.UUID) error {
-	result, err := r.DB.Exec(
+func (r *Repository) DeleteDeveloperSkill(ctx context.Context, developerID, skillID uuid.UUID) error {
+	result, err := r.DB.ExecContext(
+		ctx,
 		`DELETE FROM developer_skills WHERE developer_id = $1 AND skill_id = $2`,
 		developerID,
 		skillID,

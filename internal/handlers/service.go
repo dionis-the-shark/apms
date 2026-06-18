@@ -17,10 +17,15 @@ import (
 )
 
 func NewRouter(services *app.Services) nethttp.Handler {
+	// Створення роутера для побудови HTTP-сервіса
 	r := chi.NewRouter()
+	// Підлючення логів для запису початку та кінця запиту
 	r.Use(middleware.Logger)
+	// Підлючення захисту від критичних помилок
+	// Критичні будуть повертатися як помилки зі статусом 500 замість повного збою
 	r.Use(middleware.Recoverer)
 
+	// Додавання маршрутів для прослуховування та взаємодії із Auth
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", auth.Register(services.Auth))
 		r.Post("/login", auth.Login(services.Auth))

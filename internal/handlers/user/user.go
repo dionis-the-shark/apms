@@ -1,9 +1,11 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	userusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/user/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc userusecase.API) http.HandlerFunc {
 			return
 		}
 
-		u, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		u, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -38,7 +43,10 @@ func GetByID(svc userusecase.API) http.HandlerFunc {
 			return
 		}
 
-		u, err := svc.GetByID(userID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		u, err := svc.GetByID(ctx, userID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -55,7 +63,10 @@ func GetByID(svc userusecase.API) http.HandlerFunc {
 
 func GetAll(svc userusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		users, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		users, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -80,7 +91,10 @@ func Update(svc userusecase.API) http.HandlerFunc {
 			return
 		}
 
-		u, err := svc.Update(userID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		u, err := svc.Update(ctx, userID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -103,7 +117,10 @@ func Delete(svc userusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(userID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, userID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

@@ -1,9 +1,11 @@
 package developer_skill
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	developerskillusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/developer_skill/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc developerskillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		ds, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		ds, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -43,7 +48,10 @@ func GetByIDs(svc developerskillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		ds, err := svc.GetByIDs(developerID, skillID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		ds, err := svc.GetByIDs(ctx, developerID, skillID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -60,7 +68,10 @@ func GetByIDs(svc developerskillusecase.API) http.HandlerFunc {
 
 func GetAll(svc developerskillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		skills, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		skills, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -79,7 +90,10 @@ func GetByDeveloper(svc developerskillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		skills, err := svc.GetByDeveloper(developerID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		skills, err := svc.GetByDeveloper(ctx, developerID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -109,7 +123,10 @@ func Update(svc developerskillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		ds, err := svc.Update(oldDeveloperID, oldSkillID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		ds, err := svc.Update(ctx, oldDeveloperID, oldSkillID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -137,7 +154,10 @@ func Delete(svc developerskillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(developerID, skillID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, developerID, skillID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

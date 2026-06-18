@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"time"
 
 	usermodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/user"
@@ -15,11 +16,11 @@ type Service struct {
 }
 
 type API interface {
-	Create(input CreateInput) (usermodule.User, error)
-	GetByID(userID uuid.UUID) (usermodule.User, error)
-	GetAll() ([]usermodule.User, error)
-	Update(userID uuid.UUID, input UpdateInput) (usermodule.User, error)
-	Delete(userID uuid.UUID) error
+	Create(ctx context.Context, input CreateInput) (usermodule.User, error)
+	GetByID(ctx context.Context, userID uuid.UUID) (usermodule.User, error)
+	GetAll(ctx context.Context) ([]usermodule.User, error)
+	Update(ctx context.Context, userID uuid.UUID, input UpdateInput) (usermodule.User, error)
+	Delete(ctx context.Context, userID uuid.UUID) error
 }
 
 type CreateInput struct {
@@ -44,7 +45,7 @@ func New(repo ports.Repository) *Service {
 	}
 }
 
-func (s *Service) Create(input CreateInput) (usermodule.User, error) {
+func (s *Service) Create(ctx context.Context, input CreateInput) (usermodule.User, error) {
 	u := usermodule.User{
 		UserID:       s.newUUID(),
 		Name:         input.Name,
@@ -53,21 +54,21 @@ func (s *Service) Create(input CreateInput) (usermodule.User, error) {
 		Role:         input.Role,
 		CreatedAt:    s.now(),
 	}
-	if err := s.repo.CreateUser(&u); err != nil {
+	if err := s.repo.CreateUser(ctx, &u); err != nil {
 		return usermodule.User{}, err
 	}
 	return u, nil
 }
 
-func (s *Service) GetByID(userID uuid.UUID) (usermodule.User, error) {
-	return s.repo.GetUserByID(userID)
+func (s *Service) GetByID(ctx context.Context, userID uuid.UUID) (usermodule.User, error) {
+	return s.repo.GetUserByID(ctx, userID)
 }
 
-func (s *Service) GetAll() ([]usermodule.User, error) {
-	return s.repo.GetUsers()
+func (s *Service) GetAll(ctx context.Context) ([]usermodule.User, error) {
+	return s.repo.GetUsers(ctx)
 }
 
-func (s *Service) Update(userID uuid.UUID, input UpdateInput) (usermodule.User, error) {
+func (s *Service) Update(ctx context.Context, userID uuid.UUID, input UpdateInput) (usermodule.User, error) {
 	u := usermodule.User{
 		UserID:       userID,
 		Name:         input.Name,
@@ -75,12 +76,12 @@ func (s *Service) Update(userID uuid.UUID, input UpdateInput) (usermodule.User, 
 		PasswordHash: input.PasswordHash,
 		Role:         input.Role,
 	}
-	if err := s.repo.UpdateUser(u); err != nil {
+	if err := s.repo.UpdateUser(ctx, u); err != nil {
 		return usermodule.User{}, err
 	}
 	return u, nil
 }
 
-func (s *Service) Delete(userID uuid.UUID) error {
-	return s.repo.DeleteUser(userID)
+func (s *Service) Delete(ctx context.Context, userID uuid.UUID) error {
+	return s.repo.DeleteUser(ctx, userID)
 }

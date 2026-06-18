@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	rolemodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role"
@@ -21,24 +22,24 @@ func scanRole(s roleScanner) (rolemodule.Role, error) {
 	return r, err
 }
 
-func (r *Repository) CreateRole(roleModel *rolemodule.Role) error {
+func (r *Repository) CreateRole(ctx context.Context, roleModel *rolemodule.Role) error {
 	if roleModel.RoleID == uuid.Nil {
 		roleModel.RoleID = uuid.New()
 	}
 
 	query := `INSERT INTO roles (role_id, title, status)
 			  VALUES ($1, $2, $3)`
-	_, err := r.DB.Exec(query, roleModel.RoleID, roleModel.Title, roleModel.Status)
+	_, err := r.DB.ExecContext(ctx, query, roleModel.RoleID, roleModel.Title, roleModel.Status)
 	return err
 }
 
-func (r *Repository) GetRoleByID(roleID uuid.UUID) (rolemodule.Role, error) {
+func (r *Repository) GetRoleByID(ctx context.Context, roleID uuid.UUID) (rolemodule.Role, error) {
 	query := `SELECT role_id, title, status FROM roles WHERE role_id = $1`
-	return scanRole(r.DB.QueryRow(query, roleID))
+	return scanRole(r.DB.QueryRowContext(ctx, query, roleID))
 }
 
-func (r *Repository) GetRoles() ([]rolemodule.Role, error) {
-	rows, err := r.DB.Query(`SELECT role_id, title, status FROM roles`)
+func (r *Repository) GetRoles(ctx context.Context) ([]rolemodule.Role, error) {
+	rows, err := r.DB.QueryContext(ctx, `SELECT role_id, title, status FROM roles`)
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +59,9 @@ func (r *Repository) GetRoles() ([]rolemodule.Role, error) {
 	return roles, nil
 }
 
-func (r *Repository) UpdateRole(roleModel rolemodule.Role) error {
+func (r *Repository) UpdateRole(ctx context.Context, roleModel rolemodule.Role) error {
 	query := `UPDATE roles SET title = $1, status = $2 WHERE role_id = $3`
-	result, err := r.DB.Exec(query, roleModel.Title, roleModel.Status, roleModel.RoleID)
+	result, err := r.DB.ExecContext(ctx, query, roleModel.Title, roleModel.Status, roleModel.RoleID)
 	if err != nil {
 		return err
 	}
@@ -74,8 +75,8 @@ func (r *Repository) UpdateRole(roleModel rolemodule.Role) error {
 	return nil
 }
 
-func (r *Repository) DeleteRole(roleID uuid.UUID) error {
-	result, err := r.DB.Exec(`DELETE FROM roles WHERE role_id = $1`, roleID)
+func (r *Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+	result, err := r.DB.ExecContext(ctx, `DELETE FROM roles WHERE role_id = $1`, roleID)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	projectmodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/project"
@@ -27,7 +28,7 @@ func scanProject(s projectScanner) (projectmodule.Project, error) {
 	return p, err
 }
 
-func (r *Repository) CreateProject(p *projectmodule.Project) error {
+func (r *Repository) CreateProject(ctx context.Context, p *projectmodule.Project) error {
 	if p.ProjectID == uuid.Nil {
 		p.ProjectID = uuid.New()
 	}
@@ -35,7 +36,8 @@ func (r *Repository) CreateProject(p *projectmodule.Project) error {
 	query := `INSERT INTO projects (project_id, title, description, manager_id, created_at)
 			  VALUES ($1, $2, $3, $4, $5)
 			  RETURNING created_at`
-	return r.DB.QueryRow(
+	return r.DB.QueryRowContext(
+		ctx,
 		query,
 		p.ProjectID,
 		p.Title,
@@ -45,14 +47,14 @@ func (r *Repository) CreateProject(p *projectmodule.Project) error {
 	).Scan(&p.CreatedAt)
 }
 
-func (r *Repository) GetProjectByID(projectID uuid.UUID) (projectmodule.Project, error) {
+func (r *Repository) GetProjectByID(ctx context.Context, projectID uuid.UUID) (projectmodule.Project, error) {
 	query := `SELECT project_id, title, description, manager_id, created_at
 			  FROM projects WHERE project_id = $1`
-	return scanProject(r.DB.QueryRow(query, projectID))
+	return scanProject(r.DB.QueryRowContext(ctx, query, projectID))
 }
 
-func (r *Repository) GetProjects() ([]projectmodule.Project, error) {
-	rows, err := r.DB.Query(`SELECT project_id, title, description, manager_id, created_at FROM projects`)
+func (r *Repository) GetProjects(ctx context.Context) ([]projectmodule.Project, error) {
+	rows, err := r.DB.QueryContext(ctx, `SELECT project_id, title, description, manager_id, created_at FROM projects`)
 	if err != nil {
 		return nil, err
 	}
@@ -72,10 +74,10 @@ func (r *Repository) GetProjects() ([]projectmodule.Project, error) {
 	return projects, nil
 }
 
-func (r *Repository) UpdateProject(p projectmodule.Project) error {
+func (r *Repository) UpdateProject(ctx context.Context, p projectmodule.Project) error {
 	query := `UPDATE projects SET title = $1, description = $2, manager_id = $3
 			  WHERE project_id = $4`
-	result, err := r.DB.Exec(query, p.Title, p.Description, p.ManagerID, p.ProjectID)
+	result, err := r.DB.ExecContext(ctx, query, p.Title, p.Description, p.ManagerID, p.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -89,8 +91,8 @@ func (r *Repository) UpdateProject(p projectmodule.Project) error {
 	return nil
 }
 
-func (r *Repository) DeleteProject(projectID uuid.UUID) error {
-	result, err := r.DB.Exec(`DELETE FROM projects WHERE project_id = $1`, projectID)
+func (r *Repository) DeleteProject(ctx context.Context, projectID uuid.UUID) error {
+	result, err := r.DB.ExecContext(ctx, `DELETE FROM projects WHERE project_id = $1`, projectID)
 	if err != nil {
 		return err
 	}

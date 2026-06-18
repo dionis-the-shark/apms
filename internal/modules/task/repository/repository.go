@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	taskmodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task"
@@ -32,7 +33,7 @@ func scanTask(s taskScanner) (taskmodule.Task, error) {
 	return t, err
 }
 
-func (r *Repository) CreateTask(t *taskmodule.Task) error {
+func (r *Repository) CreateTask(ctx context.Context, t *taskmodule.Task) error {
 	if t.TaskID == uuid.Nil {
 		t.TaskID = uuid.New()
 	}
@@ -51,7 +52,8 @@ func (r *Repository) CreateTask(t *taskmodule.Task) error {
 	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	RETURNING created_at`
 
-	return r.DB.QueryRow(
+	return r.DB.QueryRowContext(
+		ctx,
 		query,
 		t.TaskID,
 		t.ProjectID,
@@ -66,19 +68,19 @@ func (r *Repository) CreateTask(t *taskmodule.Task) error {
 	).Scan(&t.CreatedAt)
 }
 
-func (r *Repository) GetTaskByID(taskID uuid.UUID) (taskmodule.Task, error) {
+func (r *Repository) GetTaskByID(ctx context.Context, taskID uuid.UUID) (taskmodule.Task, error) {
 	query := `SELECT task_id, project_id, title, description, status, priority, estimated_hours, required_skill_id, executor_id, created_at
 			  FROM tasks WHERE task_id = $1`
 
-	row := r.DB.QueryRow(query, taskID)
+	row := r.DB.QueryRowContext(ctx, query, taskID)
 	return scanTask(row)
 }
 
-func (r *Repository) GetTasksByProject(projectID uuid.UUID) ([]taskmodule.Task, error) {
+func (r *Repository) GetTasksByProject(ctx context.Context, projectID uuid.UUID) ([]taskmodule.Task, error) {
 	query := `SELECT task_id, project_id, title, description, status, priority, estimated_hours, required_skill_id, executor_id, created_at
               FROM tasks WHERE project_id = $1`
 
-	rows, err := r.DB.Query(query, projectID)
+	rows, err := r.DB.QueryContext(ctx, query, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +100,7 @@ func (r *Repository) GetTasksByProject(projectID uuid.UUID) ([]taskmodule.Task, 
 	return tasks, nil
 }
 
-func (r *Repository) UpdateTask(t taskmodule.Task) error {
+func (r *Repository) UpdateTask(ctx context.Context, t taskmodule.Task) error {
 	query := `UPDATE tasks SET
 		project_id = $1,
 		title = $2,
@@ -110,7 +112,8 @@ func (r *Repository) UpdateTask(t taskmodule.Task) error {
 		executor_id = $8
 	WHERE task_id = $9`
 
-	result, err := r.DB.Exec(
+	result, err := r.DB.ExecContext(
+		ctx,
 		query,
 		t.ProjectID,
 		t.Title,
@@ -136,8 +139,8 @@ func (r *Repository) UpdateTask(t taskmodule.Task) error {
 	return nil
 }
 
-func (r *Repository) DeleteTask(taskID uuid.UUID) error {
-	result, err := r.DB.Exec(`DELETE FROM tasks WHERE task_id = $1`, taskID)
+func (r *Repository) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
+	result, err := r.DB.ExecContext(ctx, `DELETE FROM tasks WHERE task_id = $1`, taskID)
 	if err != nil {
 		return err
 	}

@@ -1,9 +1,11 @@
 package task
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	taskusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc taskusecase.API) http.HandlerFunc {
 			return
 		}
 
-		t, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		t, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -38,7 +43,10 @@ func GetByID(svc taskusecase.API) http.HandlerFunc {
 			return
 		}
 
-		t, err := svc.GetByID(taskID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		t, err := svc.GetByID(ctx, taskID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -61,7 +69,10 @@ func GetByProject(svc taskusecase.API) http.HandlerFunc {
 			return
 		}
 
-		tasks, err := svc.GetByProject(projectID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		tasks, err := svc.GetByProject(ctx, projectID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -86,7 +97,10 @@ func Update(svc taskusecase.API) http.HandlerFunc {
 			return
 		}
 
-		t, err := svc.Update(taskID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		t, err := svc.Update(ctx, taskID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -109,7 +123,10 @@ func Delete(svc taskusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(taskID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, taskID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

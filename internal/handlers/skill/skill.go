@@ -1,9 +1,11 @@
 package skill
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	skillusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/skill/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc skillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		sk, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		sk, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -38,7 +43,10 @@ func GetByID(svc skillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		sk, err := svc.GetByID(skillID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		sk, err := svc.GetByID(ctx, skillID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -55,7 +63,10 @@ func GetByID(svc skillusecase.API) http.HandlerFunc {
 
 func GetAll(svc skillusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		skills, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		skills, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -80,7 +91,10 @@ func Update(svc skillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		sk, err := svc.Update(skillID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		sk, err := svc.Update(ctx, skillID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -103,7 +117,10 @@ func Delete(svc skillusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(skillID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, skillID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

@@ -1,9 +1,11 @@
 package task_dependency
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	taskdependencyusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task_dependency/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc taskdependencyusecase.API) http.HandlerFunc {
 			return
 		}
 
-		td, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		td, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -43,7 +48,10 @@ func GetByIDs(svc taskdependencyusecase.API) http.HandlerFunc {
 			return
 		}
 
-		td, err := svc.GetByIDs(blockedTaskID, dependentOnID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		td, err := svc.GetByIDs(ctx, blockedTaskID, dependentOnID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -60,7 +68,10 @@ func GetByIDs(svc taskdependencyusecase.API) http.HandlerFunc {
 
 func GetAll(svc taskdependencyusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deps, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		deps, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -79,7 +90,10 @@ func GetByBlockedTask(svc taskdependencyusecase.API) http.HandlerFunc {
 			return
 		}
 
-		deps, err := svc.GetByBlockedTask(blockedTaskID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		deps, err := svc.GetByBlockedTask(ctx, blockedTaskID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -109,7 +123,10 @@ func Update(svc taskdependencyusecase.API) http.HandlerFunc {
 			return
 		}
 
-		td, err := svc.Update(oldBlockedTaskID, oldDependentOnID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		td, err := svc.Update(ctx, oldBlockedTaskID, oldDependentOnID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -137,7 +154,10 @@ func Delete(svc taskdependencyusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(blockedTaskID, dependentOnID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, blockedTaskID, dependentOnID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

@@ -1,9 +1,11 @@
 package role
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	roleusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc roleusecase.API) http.HandlerFunc {
 			return
 		}
 
-		roleModel, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		roleModel, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -38,7 +43,10 @@ func GetByID(svc roleusecase.API) http.HandlerFunc {
 			return
 		}
 
-		roleModel, err := svc.GetByID(roleID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		roleModel, err := svc.GetByID(ctx, roleID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -55,7 +63,10 @@ func GetByID(svc roleusecase.API) http.HandlerFunc {
 
 func GetAll(svc roleusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		roles, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		roles, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -80,7 +91,10 @@ func Update(svc roleusecase.API) http.HandlerFunc {
 			return
 		}
 
-		roleModel, err := svc.Update(roleID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		roleModel, err := svc.Update(ctx, roleID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -103,7 +117,10 @@ func Delete(svc roleusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(roleID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, roleID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

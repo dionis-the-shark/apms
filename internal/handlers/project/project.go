@@ -1,9 +1,11 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	projectusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/project/usecase"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,10 @@ func Create(svc projectusecase.API) http.HandlerFunc {
 			return
 		}
 
-		p, err := svc.Create(input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		p, err := svc.Create(ctx, input)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -38,7 +43,10 @@ func GetByID(svc projectusecase.API) http.HandlerFunc {
 			return
 		}
 
-		p, err := svc.GetByID(projectID)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		p, err := svc.GetByID(ctx, projectID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -55,7 +63,10 @@ func GetByID(svc projectusecase.API) http.HandlerFunc {
 
 func GetAll(svc projectusecase.API) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		projects, err := svc.GetAll()
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		projects, err := svc.GetAll(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -80,7 +91,10 @@ func Update(svc projectusecase.API) http.HandlerFunc {
 			return
 		}
 
-		p, err := svc.Update(projectID, input)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		p, err := svc.Update(ctx, projectID, input)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -103,7 +117,10 @@ func Delete(svc projectusecase.API) http.HandlerFunc {
 			return
 		}
 
-		if err := svc.Delete(projectID); err != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		if err := svc.Delete(ctx, projectID); err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Not found", http.StatusNotFound)
 				return

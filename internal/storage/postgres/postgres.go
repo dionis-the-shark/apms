@@ -11,15 +11,17 @@ import (
 const driverName = "postgres"
 
 func New(cfg apmsenv.Config) (*sql.DB, error) {
+	// Створення форматованого рядка підключення
 	connStr := fmt.Sprintf(
-		"user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
+		"user=%s password=%s dbname=%s host=%s port=%s",
 		cfg.DBUser,
 		cfg.DBPassword,
 		cfg.DBName,
 		cfg.DBHost,
 		cfg.DBPort,
-		cfg.DBSSLMode,
 	)
+
+	// Підключення бази даних
 	db, err := sql.Open(driverName, connStr)
 	if err != nil {
 		return nil, err
@@ -28,5 +30,7 @@ func New(cfg apmsenv.Config) (*sql.DB, error) {
 		_ = db.Close()
 		return nil, err
 	}
+
+	//Повернення об'єкта підключеної бази
 	return db, nil
 }

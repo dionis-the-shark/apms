@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	taskdependencymodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task_dependency"
@@ -21,21 +22,21 @@ func scanTaskDependency(s taskDependencyScanner) (taskdependencymodule.TaskDepen
 	return td, err
 }
 
-func (r *Repository) CreateTaskDependency(td taskdependencymodule.TaskDependency) error {
+func (r *Repository) CreateTaskDependency(ctx context.Context, td taskdependencymodule.TaskDependency) error {
 	query := `INSERT INTO task_dependencies (blocked_task_id, dependent_on_id)
 			  VALUES ($1, $2)`
-	_, err := r.DB.Exec(query, td.BlockedTaskID, td.DependentOnID)
+	_, err := r.DB.ExecContext(ctx, query, td.BlockedTaskID, td.DependentOnID)
 	return err
 }
 
-func (r *Repository) GetTaskDependency(blockedTaskID, dependentOnID uuid.UUID) (taskdependencymodule.TaskDependency, error) {
+func (r *Repository) GetTaskDependency(ctx context.Context, blockedTaskID, dependentOnID uuid.UUID) (taskdependencymodule.TaskDependency, error) {
 	query := `SELECT blocked_task_id, dependent_on_id FROM task_dependencies
 			  WHERE blocked_task_id = $1 AND dependent_on_id = $2`
-	return scanTaskDependency(r.DB.QueryRow(query, blockedTaskID, dependentOnID))
+	return scanTaskDependency(r.DB.QueryRowContext(ctx, query, blockedTaskID, dependentOnID))
 }
 
-func (r *Repository) GetTaskDependencies() ([]taskdependencymodule.TaskDependency, error) {
-	rows, err := r.DB.Query(`SELECT blocked_task_id, dependent_on_id FROM task_dependencies`)
+func (r *Repository) GetTaskDependencies(ctx context.Context) ([]taskdependencymodule.TaskDependency, error) {
+	rows, err := r.DB.QueryContext(ctx, `SELECT blocked_task_id, dependent_on_id FROM task_dependencies`)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +56,9 @@ func (r *Repository) GetTaskDependencies() ([]taskdependencymodule.TaskDependenc
 	return deps, nil
 }
 
-func (r *Repository) GetTaskDependenciesByBlockedTask(blockedTaskID uuid.UUID) ([]taskdependencymodule.TaskDependency, error) {
-	rows, err := r.DB.Query(
+func (r *Repository) GetTaskDependenciesByBlockedTask(ctx context.Context, blockedTaskID uuid.UUID) ([]taskdependencymodule.TaskDependency, error) {
+	rows, err := r.DB.QueryContext(
+		ctx,
 		`SELECT blocked_task_id, dependent_on_id FROM task_dependencies WHERE blocked_task_id = $1`,
 		blockedTaskID,
 	)
@@ -79,10 +81,10 @@ func (r *Repository) GetTaskDependenciesByBlockedTask(blockedTaskID uuid.UUID) (
 	return deps, nil
 }
 
-func (r *Repository) UpdateTaskDependency(oldBlockedTaskID, oldDependentOnID, newBlockedTaskID, newDependentOnID uuid.UUID) error {
+func (r *Repository) UpdateTaskDependency(ctx context.Context, oldBlockedTaskID, oldDependentOnID, newBlockedTaskID, newDependentOnID uuid.UUID) error {
 	query := `UPDATE task_dependencies SET blocked_task_id = $1, dependent_on_id = $2
 			  WHERE blocked_task_id = $3 AND dependent_on_id = $4`
-	result, err := r.DB.Exec(query, newBlockedTaskID, newDependentOnID, oldBlockedTaskID, oldDependentOnID)
+	result, err := r.DB.ExecContext(ctx, query, newBlockedTaskID, newDependentOnID, oldBlockedTaskID, oldDependentOnID)
 	if err != nil {
 		return err
 	}
@@ -96,8 +98,9 @@ func (r *Repository) UpdateTaskDependency(oldBlockedTaskID, oldDependentOnID, ne
 	return nil
 }
 
-func (r *Repository) DeleteTaskDependency(blockedTaskID, dependentOnID uuid.UUID) error {
-	result, err := r.DB.Exec(
+func (r *Repository) DeleteTaskDependency(ctx context.Context, blockedTaskID, dependentOnID uuid.UUID) error {
+	result, err := r.DB.ExecContext(
+		ctx,
 		`DELETE FROM task_dependencies WHERE blocked_task_id = $1 AND dependent_on_id = $2`,
 		blockedTaskID,
 		dependentOnID,
