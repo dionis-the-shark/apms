@@ -39,7 +39,7 @@ func (r *Repository) GetRoleByID(ctx context.Context, roleID uuid.UUID) (rolemod
 }
 
 func (r *Repository) GetRoles(ctx context.Context) ([]rolemodule.Role, error) {
-	rows, err := r.DB.QueryContext(ctx, `SELECT role_id, title, status FROM roles`)
+	rows, err := r.DB.QueryContext(ctx, `SELECT role_id, title, status FROM roles WHERE status = 'active'`)
 	if err != nil {
 		return nil, err
 	}

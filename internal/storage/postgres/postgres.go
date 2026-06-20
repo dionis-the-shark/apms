@@ -13,12 +13,13 @@ const driverName = "postgres"
 func New(cfg apmsenv.Config) (*sql.DB, error) {
 	// Створення форматованого рядка підключення
 	connStr := fmt.Sprintf(
-		"user=%s password=%s dbname=%s host=%s port=%s",
+		"user=%s password=%s dbname=%s host=%s port=%s sslmode=%s",
 		cfg.DBUser,
 		cfg.DBPassword,
 		cfg.DBName,
 		cfg.DBHost,
 		cfg.DBPort,
+		cfg.DBSSLMode,
 	)
 
 	// Підключення бази даних

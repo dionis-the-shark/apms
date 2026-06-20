@@ -1,6 +1,6 @@
 module github.com/dionis-the-shark/apms-task-tracker
 
-go 1.26.3
+go 1.22
 
 require (
 	github.com/dionis-the-shark/apms-env v0.0.0
