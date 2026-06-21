@@ -45,6 +45,7 @@ type RegisterInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	RoleID   string `json:"role_id"`
+	SkillID  string `json:"skill_id"`
 }
 
 type LoginInput struct {
@@ -80,14 +81,19 @@ func New(repo authports.Repository) *Service {
 }
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (TokenResponse, error) {
-	if input.Name == "" || input.Email == "" || input.Password == "" || input.RoleID == "" {
-		return TokenResponse{}, fmt.Errorf("%w: name, email, password, and role_id are required", ErrInvalidInput)
+	if input.Name == "" || input.Email == "" || input.Password == "" || input.RoleID == "" || input.SkillID == "" {
+		return TokenResponse{}, fmt.Errorf("%w: name, email, password, role_id, and skill_id are required", ErrInvalidInput)
 	}
 
 	if _, err := s.repo.GetUserByEmail(ctx, input.Email); err == nil {
 		return TokenResponse{}, ErrEmailExists
 	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return TokenResponse{}, err
+	}
+
+	skillID, err := uuid.Parse(input.SkillID)
+	if err != nil {
+		return TokenResponse{}, fmt.Errorf("%w: invalid skill_id", ErrInvalidInput)
 	}
 
 	hash, err := hashPassword(input.Password)
@@ -102,7 +108,7 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (TokenRespo
 		PasswordHash: hash,
 		RoleID:       input.RoleID,
 	}
-	if err := s.repo.CreateUser(ctx, u); err != nil {
+	if err := s.repo.CreateUserWithSkill(ctx, u, skillID); err != nil {
 		return TokenResponse{}, err
 	}
 	token, err := s.issueToken(u.UserID.String(), u.RoleID)

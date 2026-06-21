@@ -54,7 +54,6 @@ func NewRouter(services *app.Services) nethttp.Handler {
 		r.Get("/{task_id}", task_handlers.GetByID(services.Tasks, services.Auth, services.Roles))
 		r.Put("/{task_id}", task_handlers.Update(services.Tasks, services.Auth, services.Roles))
 		r.Delete("/{task_id}", task_handlers.Delete(services.Tasks, services.Auth, services.Roles))
-		r.Put("/{task_id}", task_handlers.Delete(services.Tasks, services.Auth, services.Roles))
 	})
 
 	r.Route("/skills", func(r chi.Router) {
