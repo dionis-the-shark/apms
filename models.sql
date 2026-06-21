@@ -5,7 +5,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL,
+    role_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (user_id)
 );

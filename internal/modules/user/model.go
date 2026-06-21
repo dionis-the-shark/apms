@@ -11,6 +11,6 @@ type User struct {
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"password_hash"`
-	Role         string    `json:"role"`
+	RoleID       string    `json:"role_id"`
 	CreatedAt    time.Time `json:"created_at"`
 }

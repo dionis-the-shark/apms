@@ -44,7 +44,7 @@ type RegisterInput struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Role     string `json:"role"`
+	RoleID   string `json:"role_id"`
 }
 
 type LoginInput struct {
@@ -58,7 +58,7 @@ type TokenResponse struct {
 
 type ValidateResponse struct {
 	UserID string `json:"user_id"`
-	Role   string `json:"role"`
+	RoleID string `json:"role_id"`
 }
 
 func New(repo authports.Repository) *Service {
@@ -80,8 +80,8 @@ func New(repo authports.Repository) *Service {
 }
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (TokenResponse, error) {
-	if input.Name == "" || input.Email == "" || input.Password == "" || input.Role == "" {
-		return TokenResponse{}, fmt.Errorf("%w: name, email, password, and role are required", ErrInvalidInput)
+	if input.Name == "" || input.Email == "" || input.Password == "" || input.RoleID == "" {
+		return TokenResponse{}, fmt.Errorf("%w: name, email, password, and role_id are required", ErrInvalidInput)
 	}
 
 	if _, err := s.repo.GetUserByEmail(ctx, input.Email); err == nil {
@@ -100,12 +100,12 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (TokenRespo
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: hash,
-		Role:         input.Role,
+		RoleID:       input.RoleID,
 	}
 	if err := s.repo.CreateUser(ctx, u); err != nil {
 		return TokenResponse{}, err
 	}
-	token, err := s.issueToken(u.UserID.String(), u.Role)
+	token, err := s.issueToken(u.UserID.String(), u.RoleID)
 	if err != nil {
 		return TokenResponse{}, err
 	}
@@ -133,7 +133,7 @@ func (s *Service) Login(ctx context.Context, input LoginInput) (TokenResponse, e
 		return TokenResponse{}, ErrInvalidCredentials
 	}
 
-	token, err := s.issueToken(u.UserID.String(), u.Role)
+	token, err := s.issueToken(u.UserID.String(), u.RoleID)
 	if err != nil {
 		return TokenResponse{}, err
 	}
@@ -169,24 +169,24 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (ValidateResp
 	if payload.Exp < time.Now().Unix() {
 		return ValidateResponse{}, ErrTokenExpired
 	}
-	if payload.Sub == "" || payload.Role == "" {
+	if payload.Sub == "" || payload.RoleID == "" {
 		return ValidateResponse{}, ErrInvalidToken
 	}
 
-	return ValidateResponse{UserID: payload.Sub, Role: payload.Role}, nil
+	return ValidateResponse{UserID: payload.Sub, RoleID: payload.RoleID}, nil
 }
 
 type tokenPayload struct {
-	Sub  string `json:"sub"`
-	Role string `json:"role"`
-	Exp  int64  `json:"exp"`
+	Sub    string `json:"sub"`
+	RoleID string `json:"role_id"`
+	Exp    int64  `json:"exp"`
 }
 
-func (s *Service) issueToken(userID, role string) (string, error) {
+func (s *Service) issueToken(userID, roleID string) (string, error) {
 	payload := tokenPayload{
-		Sub:  userID,
-		Role: role,
-		Exp:  time.Now().Add(s.tokenTTL).Unix(),
+		Sub:    userID,
+		RoleID: roleID,
+		Exp:    time.Now().Add(s.tokenTTL).Unix(),
 	}
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {

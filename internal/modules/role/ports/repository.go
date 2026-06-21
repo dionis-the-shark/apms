@@ -3,6 +3,7 @@ package ports
 import (
 	"context"
 
+	"github.com/dionis-the-shark/apms-task-tracker/internal/authz"
 	rolemodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role"
 	"github.com/google/uuid"
 )
@@ -13,4 +14,5 @@ type Repository interface {
 	GetRoles(ctx context.Context) ([]rolemodule.Role, error)
 	UpdateRole(ctx context.Context, r rolemodule.Role) error
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
+	ActionAllowed(ctx context.Context, roleIdentifier string, action authz.Action) (bool, error)
 }

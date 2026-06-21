@@ -27,14 +27,14 @@ type CreateInput struct {
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
-	Role         string `json:"role"`
+	RoleID       string `json:"role_id"`
 }
 
 type UpdateInput struct {
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
-	Role         string `json:"role"`
+	RoleID       string `json:"role_id"`
 }
 
 func New(repo ports.Repository) *Service {
@@ -51,7 +51,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (usermodule.Use
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: input.PasswordHash,
-		Role:         input.Role,
+		RoleID:       input.RoleID,
 		CreatedAt:    s.now(),
 	}
 	if err := s.repo.CreateUser(ctx, &u); err != nil {
@@ -74,7 +74,7 @@ func (s *Service) Update(ctx context.Context, userID uuid.UUID, input UpdateInpu
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: input.PasswordHash,
-		Role:         input.Role,
+		RoleID:       input.RoleID,
 	}
 	if err := s.repo.UpdateUser(ctx, u); err != nil {
 		return usermodule.User{}, err

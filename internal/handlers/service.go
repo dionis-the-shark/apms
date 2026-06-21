@@ -41,19 +41,20 @@ func NewRouter(services *app.Services) nethttp.Handler {
 	})
 
 	r.Route("/projects", func(r chi.Router) {
-		r.Post("/", project_handlers.Create(services.Projects))
-		r.Get("/", project_handlers.GetAll(services.Projects))
-		r.Get("/{project_id}", project_handlers.GetByID(services.Projects))
-		r.Put("/{project_id}", project_handlers.Update(services.Projects))
-		r.Delete("/{project_id}", project_handlers.Delete(services.Projects))
-		r.Get("/{project_id}/tasks", task_handlers.GetByProject(services.Tasks))
+		r.Post("/", project_handlers.Create(services.Projects, services.Auth, services.Roles))
+		r.Get("/", project_handlers.GetAll(services.Projects, services.Auth))
+		r.Get("/{project_id}", project_handlers.GetByID(services.Projects, services.Auth))
+		r.Put("/{project_id}", project_handlers.Update(services.Projects, services.Auth))
+		r.Delete("/{project_id}", project_handlers.Delete(services.Projects, services.Auth))
+		r.Get("/{project_id}/tasks", task_handlers.GetByProject(services.Tasks, services.Auth, services.Roles))
 	})
 
 	r.Route("/tasks", func(r chi.Router) {
-		r.Post("/", task_handlers.Create(services.Tasks))
-		r.Get("/{task_id}", task_handlers.GetByID(services.Tasks))
-		r.Put("/{task_id}", task_handlers.Update(services.Tasks))
-		r.Delete("/{task_id}", task_handlers.Delete(services.Tasks))
+		r.Post("/", task_handlers.Create(services.Tasks, services.Auth, services.Roles))
+		r.Get("/{task_id}", task_handlers.GetByID(services.Tasks, services.Auth, services.Roles))
+		r.Put("/{task_id}", task_handlers.Update(services.Tasks, services.Auth, services.Roles))
+		r.Delete("/{task_id}", task_handlers.Delete(services.Tasks, services.Auth, services.Roles))
+		r.Put("/{task_id}", task_handlers.Delete(services.Tasks, services.Auth, services.Roles))
 	})
 
 	r.Route("/skills", func(r chi.Router) {

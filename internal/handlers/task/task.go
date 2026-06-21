@@ -7,13 +7,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dionis-the-shark/apms-task-tracker/internal/authz"
+	"github.com/dionis-the-shark/apms-task-tracker/internal/httpauth"
+	authusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/auth/usecase"
+	roleusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role/usecase"
 	taskusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/task/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc taskusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Create(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskCreate, func(w http.ResponseWriter, r *http.Request) {
 		var input taskusecase.CreateInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -32,11 +36,11 @@ func Create(svc taskusecase.API) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(t)
-	}
+	})
 }
 
-func GetByID(svc taskusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetByID(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskRead, func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -58,11 +62,11 @@ func GetByID(svc taskusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(t)
-	}
+	})
 }
 
-func GetByProject(svc taskusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetByProject(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskRead, func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -80,11 +84,11 @@ func GetByProject(svc taskusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(tasks)
-	}
+	})
 }
 
-func Update(svc taskusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Update(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskUpdate, func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -112,11 +116,11 @@ func Update(svc taskusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(t)
-	}
+	})
 }
 
-func Delete(svc taskusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Delete(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskDelete, func(w http.ResponseWriter, r *http.Request) {
 		taskID, err := uuid.Parse(chi.URLParam(r, "task_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -136,5 +140,5 @@ func Delete(svc taskusecase.API) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
-	}
+	})
 }

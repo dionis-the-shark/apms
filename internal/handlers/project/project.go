@@ -7,13 +7,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dionis-the-shark/apms-task-tracker/internal/authz"
+	"github.com/dionis-the-shark/apms-task-tracker/internal/httpauth"
+	authusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/auth/usecase"
 	projectusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/project/usecase"
+	roleusecase "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func Create(svc projectusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Create(svc projectusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.ProjectCreate, func(w http.ResponseWriter, r *http.Request) {
 		var input projectusecase.CreateInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -32,11 +36,11 @@ func Create(svc projectusecase.API) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(p)
-	}
+	})
 }
 
-func GetByID(svc projectusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetByID(svc projectusecase.API, authSvc authusecase.API) http.HandlerFunc {
+	return httpauth.RequireAuth(authSvc, func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -58,11 +62,11 @@ func GetByID(svc projectusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(p)
-	}
+	})
 }
 
-func GetAll(svc projectusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetAll(svc projectusecase.API, authSvc authusecase.API) http.HandlerFunc {
+	return httpauth.RequireAuth(authSvc, func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
 
@@ -74,11 +78,11 @@ func GetAll(svc projectusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(projects)
-	}
+	})
 }
 
-func Update(svc projectusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Update(svc projectusecase.API, authSvc authusecase.API) http.HandlerFunc {
+	return httpauth.RequireAuth(authSvc, func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -106,11 +110,11 @@ func Update(svc projectusecase.API) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(p)
-	}
+	})
 }
 
-func Delete(svc projectusecase.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Delete(svc projectusecase.API, authSvc authusecase.API) http.HandlerFunc {
+	return httpauth.RequireAuth(authSvc, func(w http.ResponseWriter, r *http.Request) {
 		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
 		if err != nil {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
@@ -130,5 +134,5 @@ func Delete(svc projectusecase.API) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
-	}
+	})
 }

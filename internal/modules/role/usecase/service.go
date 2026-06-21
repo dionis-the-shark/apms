@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/dionis-the-shark/apms-task-tracker/internal/authz"
 	rolemodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role"
 	"github.com/dionis-the-shark/apms-task-tracker/internal/modules/role/ports"
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ type API interface {
 	GetAll(ctx context.Context) ([]rolemodule.Role, error)
 	Update(ctx context.Context, roleID uuid.UUID, input UpdateInput) (rolemodule.Role, error)
 	Delete(ctx context.Context, roleID uuid.UUID) error
+	ActionAllowed(ctx context.Context, roleID string, action authz.Action) (bool, error)
 }
 
 type CreateInput struct {
@@ -82,4 +84,8 @@ func (s *Service) Update(ctx context.Context, roleID uuid.UUID, input UpdateInpu
 
 func (s *Service) Delete(ctx context.Context, roleID uuid.UUID) error {
 	return s.repo.DeleteRole(ctx, roleID)
+}
+
+func (s *Service) ActionAllowed(ctx context.Context, roleID string, action authz.Action) (bool, error) {
+	return s.repo.ActionAllowed(ctx, roleID, action)
 }

@@ -23,7 +23,7 @@ func scanUser(s userScanner) (usermodule.User, error) {
 		&u.Name,
 		&u.Email,
 		&u.PasswordHash,
-		&u.Role,
+		&u.RoleID,
 		&u.CreatedAt,
 	)
 	return u, err
@@ -34,7 +34,7 @@ func (r *Repository) CreateUser(ctx context.Context, u *usermodule.User) error {
 		u.UserID = uuid.New()
 	}
 
-	query := `INSERT INTO users (user_id, name, email, password_hash, role, created_at)
+	query := `INSERT INTO users (user_id, name, email, password_hash, role_id, created_at)
 			  VALUES ($1, $2, $3, $4, $5, $6)
 			  RETURNING created_at`
 	return r.DB.QueryRowContext(
@@ -44,19 +44,19 @@ func (r *Repository) CreateUser(ctx context.Context, u *usermodule.User) error {
 		u.Name,
 		u.Email,
 		u.PasswordHash,
-		u.Role,
+		u.RoleID,
 		u.CreatedAt,
 	).Scan(&u.CreatedAt)
 }
 
 func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (usermodule.User, error) {
-	query := `SELECT user_id, name, email, password_hash, role, created_at
+	query := `SELECT user_id, name, email, password_hash, role_id, created_at
 			  FROM users WHERE user_id = $1`
 	return scanUser(r.DB.QueryRowContext(ctx, query, userID))
 }
 
 func (r *Repository) GetUsers(ctx context.Context) ([]usermodule.User, error) {
-	rows, err := r.DB.QueryContext(ctx, `SELECT user_id, name, email, password_hash, role, created_at FROM users`)
+	rows, err := r.DB.QueryContext(ctx, `SELECT user_id, name, email, password_hash, role_id, created_at FROM users`)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +77,9 @@ func (r *Repository) GetUsers(ctx context.Context) ([]usermodule.User, error) {
 }
 
 func (r *Repository) UpdateUser(ctx context.Context, u usermodule.User) error {
-	query := `UPDATE users SET name = $1, email = $2, password_hash = $3, role = $4
+	query := `UPDATE users SET name = $1, email = $2, password_hash = $3, role_id = $4
 			  WHERE user_id = $5`
-	result, err := r.DB.ExecContext(ctx, query, u.Name, u.Email, u.PasswordHash, u.Role, u.UserID)
+	result, err := r.DB.ExecContext(ctx, query, u.Name, u.Email, u.PasswordHash, u.RoleID, u.UserID)
 	if err != nil {
 		return err
 	}

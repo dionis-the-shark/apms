@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strings"
 
+	"github.com/dionis-the-shark/apms-task-tracker/internal/authz"
 	rolemodule "github.com/dionis-the-shark/apms-task-tracker/internal/modules/role"
 	"github.com/google/uuid"
 )
@@ -88,4 +90,45 @@ func (r *Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func (r *Repository) ActionAllowed(ctx context.Context, roleIdentifier string, action authz.Action) (bool, error) {
+	if strings.TrimSpace(roleIdentifier) == "" || action == "" {
+		return false, nil
+	}
+
+	if roleID, err := uuid.Parse(roleIdentifier); err == nil {
+		var exists int
+		err := r.DB.QueryRowContext(
+			ctx,
+			`SELECT 1 FROM role_permissions WHERE role_id = $1 AND permission = $2`,
+			roleID,
+			string(action),
+		).Scan(&exists)
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
+	var exists int
+	err := r.DB.QueryRowContext(
+		ctx,
+		`SELECT 1
+		 FROM role_permissions rp
+		 JOIN roles r ON r.role_id = rp.role_id
+		 WHERE r.title = $1 AND rp.permission = $2 AND r.status = 'active'`,
+		roleIdentifier,
+		string(action),
+	).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
