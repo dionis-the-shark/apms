@@ -45,7 +45,7 @@ func NewServices(db *sql.DB) *Services {
 	authService := authusecase.New(authRepo)
 	userService := userusecase.New(userRepo)
 	projectService := projectusecase.New(projectRepo)
-	taskService := taskusecase.New(taskRepo)
+	taskService := taskusecase.New(taskRepo, userRepo, developerSkillRepo)
 	skillService := skillusecase.New(skillRepo)
 	developerSkillService := developerskillusecase.New(developerSkillRepo)
 	taskDependencyService := taskdependencyusecase.New(taskDependencyRepo)

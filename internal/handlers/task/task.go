@@ -142,3 +142,25 @@ func Delete(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.AP
 		w.WriteHeader(http.StatusNoContent)
 	})
 }
+
+func DistributeFreeTasks(svc taskusecase.API, authSvc authusecase.API, roleSvc roleusecase.API) http.HandlerFunc {
+	return httpauth.RequirePermission(authSvc, roleSvc, authz.TaskDistributeFree, func(w http.ResponseWriter, r *http.Request) {
+		projectID, err := uuid.Parse(chi.URLParam(r, "project_id"))
+		if err != nil {
+			http.Error(w, "Invalid UUID", http.StatusBadRequest)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
+		result, err := svc.DistributeFreeTasks(ctx, projectID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(result)
+	})
+}

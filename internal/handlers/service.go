@@ -47,6 +47,7 @@ func NewRouter(services *app.Services) nethttp.Handler {
 		r.Put("/{project_id}", project_handlers.Update(services.Projects, services.Auth))
 		r.Delete("/{project_id}", project_handlers.Delete(services.Projects, services.Auth))
 		r.Get("/{project_id}/tasks", task_handlers.GetByProject(services.Tasks, services.Auth, services.Roles))
+		r.Post("/{project_id}/tasks/distribute-free", task_handlers.DistributeFreeTasks(services.Tasks, services.Auth, services.Roles))
 	})
 
 	r.Route("/tasks", func(r chi.Router) {
